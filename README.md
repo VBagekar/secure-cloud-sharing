@@ -9,6 +9,26 @@ simulated login, and no in-browser file storage**. When a service or endpoint is
 configured, the UI shows a clear "not connected" / "Backend integration pending" state
 instead of inventing data.
 
+## Handoff to Person 2 & Person 3
+
+- **[`API_INTEGRATION.md`](./API_INTEGRATION.md)** — environment variables, the Cognito auth
+  flow, and every HTTP endpoint the frontend calls, with the request/response fields it
+  consumes and a clear split between **agreed contracts** and **items still to confirm**.
+- **[`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md)** — architecture diagram (React/Vite,
+  Cognito, CloudFront, frontend S3 hosting, API Gateway, Lambda, private S3, DynamoDB, SNS,
+  CloudWatch, CloudTrail) distinguishing **implemented** from **planned** components.
+
+Quick start for the backend/infra teammates:
+
+```bash
+npm install
+Copy-Item .env.example .env.local   # then fill in real (public) values
+npm run dev                         # http://localhost:5173
+```
+
+Never commit real values — `.env.local` is git-ignored. See §12 of `API_INTEGRATION.md` for the
+per-layer smoke test.
+
 ## Problem statement
 
 Organizations need a simple, safe way to store files and share them with teammates without
@@ -120,6 +140,13 @@ Uploads must return a **pre-signed S3 PUT URL** (private bucket). The S3 bucket 
 rule allowing `PUT` from the frontend origin. The frontend performs a direct `PUT` to that URL
 and then reloads the file list; it does not upload to the API itself.
 
+**Contract status.** The method + path above are hard-coded in the frontend and required as-is.
+The exact response **envelope and field names** (the client tolerates aliases such as
+`name`/`fileName`, `size`/`sizeBytes`), the bearer token type (ID vs access token), enum values,
+timestamp format, and whether `GET /files`/`GET /activity` accept server-side search/sort/
+pagination are **still to be confirmed** with the backend team. The full agreed-vs-unconfirmed
+breakdown is in [`API_INTEGRATION.md`](./API_INTEGRATION.md) §11.
+
 ## Error handling
 
 - `400`/`422` validation, `401` sign-in required, `403` access denied
@@ -153,6 +180,8 @@ src/
   pages/                  Login, Overview, MyFiles, SharedWithMe, Activity, Admin, Settings
   utils/format.js         Formatting helpers
   index.css               Design system / styles
+API_INTEGRATION.md        Endpoint contract + handoff guide (Person 2 / Person 3)
+docs/ARCHITECTURE.md      Architecture diagram (implemented vs. planned)
 ```
 
 ## Current blocked items
@@ -162,3 +191,8 @@ src/
 - **Backend endpoints:** anything listed above that is not yet deployed will render the
   "Backend integration pending" / "Backend not connected" state.
 - **S3 frontend hosting and CloudFront:** handled in a later stage.
+- **Open contract questions:** see [`API_INTEGRATION.md`](./API_INTEGRATION.md) §11.2 for the
+  items that still need confirmation from the backend team.
+
+See [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) for the full architecture (implemented vs.
+planned).
