@@ -249,6 +249,9 @@ a {
   font-weight: 600;
   font-size: 13px;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .sidebar {
@@ -1227,6 +1230,9 @@ a {
 }
 
 .card-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   margin-left: auto;
 }
 
@@ -1622,6 +1628,62 @@ a {
   font-size: 13px;
   margin-bottom: 14px;
   border: 1px solid rgba(220, 38, 38, 0.2);
+}
+
+.success-message {
+  background: var(--success-soft);
+  color: var(--success);
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  margin-bottom: 14px;
+  border: 1px solid rgba(22, 163, 74, 0.2);
+}
+
+.form-hint {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.code-input {
+  letter-spacing: 0.25em;
+  text-align: center;
+  font-weight: 600;
+}
+
+.auth-heading {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-strong);
+  margin-bottom: 4px;
+}
+
+.auth-help {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.55;
+  margin-bottom: 16px;
+}
+
+.auth-links {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.auth-back {
+  margin-top: 14px;
+  text-align: center;
+}
+
+.auth-secondary-btn {
+  margin-top: 10px;
+}
+
+.settings-submit {
+  align-self: flex-start;
 }
 
 .selected-file-info {

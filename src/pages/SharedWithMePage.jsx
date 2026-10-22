@@ -1,9 +1,10 @@
-import { Share2, Trash, Clock, User } from '../components/Icons'
+import { Share2, Trash, Clock, User, Download } from '../components/Icons'
 import { LoadingState, EmptyState, ErrorState } from '../components/StateViews'
 import { useToast } from '../components/Toast'
 import { api } from '../services/api'
 import { useAsync } from '../hooks/useAsync'
 import { formatDate } from '../utils/format'
+import { NotConfiguredError } from '../errors'
 
 const SharedWithMePage = () => {
   const { addToast } = useToast()
@@ -21,6 +22,29 @@ const SharedWithMePage = () => {
       addToast('Share revoked.', 'success')
     } catch (err) {
       addToast(err.message || 'Revoke failed.', 'error')
+    }
+  }
+
+  const handleDownload = async (share) => {
+    const fileId = share.fileId
+    if (!fileId) {
+      addToast('This share does not include a file id, so it cannot be downloaded.', 'warning')
+      return
+    }
+    try {
+      const url = await api.getDownloadUrl(fileId)
+      const link = document.createElement('a')
+      link.href = url
+      link.rel = 'noopener'
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+    } catch (err) {
+      if (err instanceof NotConfiguredError) {
+        addToast(err.message, 'warning')
+        return
+      }
+      addToast(err.message || 'Download failed.', 'error')
     }
   }
 
@@ -68,6 +92,14 @@ const SharedWithMePage = () => {
                 )}
               </div>
               <div className="card-actions">
+                <button
+                  type="button"
+                  className="btn btn-ghost"
+                  onClick={() => handleDownload(share)}
+                  aria-label={`Download ${share.fileName || share.name || 'shared file'}`}
+                >
+                  <Download size={15} /> Download
+                </button>
                 <button
                   type="button"
                   className="btn btn-ghost"

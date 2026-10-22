@@ -57,6 +57,15 @@ export class ValidationError extends AppError {
   }
 }
 
+export class ChallengeError extends AppError {
+  constructor(message, challenge, details) {
+    super(message, challenge)
+    this.name = 'ChallengeError'
+    this.challenge = challenge
+    this.details = details || {}
+  }
+}
+
 export class ApiError extends AppError {
   constructor(message, status, details) {
     super(message || `Request failed with status ${status}.`, 'API')
@@ -93,6 +102,9 @@ export const describeError = (error) => {
       title: 'Backend integration pending',
       message: error.message,
     }
+  }
+  if (error instanceof ChallengeError) {
+    return { kind: 'challenge', title: 'Action required', message: error.message }
   }
   return {
     kind: 'error',

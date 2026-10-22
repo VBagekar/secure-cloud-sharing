@@ -71,6 +71,25 @@ export const AuthProvider = ({ children }) => {
     }
   }, [])
 
+  const completeNewPassword = useCallback(async (newPassword, attributes) => {
+    setError(null)
+    setStatus('signingIn')
+    try {
+      const session = await authService.completeNewPasswordChallenge(newPassword, attributes)
+      setUser(session?.user || null)
+      setStatus('signedIn')
+      return session
+    } catch (err) {
+      setError(err)
+      setStatus(isAuthConfigured ? 'signedOut' : 'unconfigured')
+      throw err
+    }
+  }, [])
+
+  const clearError = useCallback(() => {
+    setError(null)
+  }, [])
+
   const signOut = useCallback(async () => {
     try {
       await authService.signOut()
@@ -93,9 +112,11 @@ export const AuthProvider = ({ children }) => {
       isRestoring: status === 'restoring',
       canAccessApp: status === 'signedIn',
       signIn,
+      completeNewPassword,
+      clearError,
       signOut,
     }),
-    [status, user, error, signIn, signOut],
+    [status, user, error, signIn, completeNewPassword, clearError, signOut],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

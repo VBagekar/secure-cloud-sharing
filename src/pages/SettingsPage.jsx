@@ -1,17 +1,57 @@
-import { User, Key, HardDrive, LogOut, Info } from '../components/Icons'
+import { useState } from 'react'
+import { User, Key, LogOut, Info, Loader2 } from '../components/Icons'
 import { isAuthConfigured } from '../config'
+import { authService } from '../services/authService'
+import { describeError } from '../errors'
+import PasswordField from '../components/PasswordField'
+import { useToast } from '../components/Toast'
+
+const MIN_PASSWORD_LENGTH = 8
 
 const SettingsPage = ({ user, onSignOut }) => {
-  const integrationRows = [
-    'Cognito',
-    'S3',
-    'DynamoDB',
-    'API Gateway',
-    'Lambda',
-    'SNS',
-    'CloudWatch',
-    'CloudTrail',
-  ]
+  const { addToast } = useToast()
+  const [currentPassword, setCurrentPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [passwordError, setPasswordError] = useState('')
+  const [passwordSuccess, setPasswordSuccess] = useState('')
+  const [isChanging, setIsChanging] = useState(false)
+
+  const handleChangePassword = async (event) => {
+    event.preventDefault()
+    setPasswordError('')
+    setPasswordSuccess('')
+    if (!currentPassword) {
+      setPasswordError('Please enter your current password.')
+      return
+    }
+    if (newPassword.length < MIN_PASSWORD_LENGTH) {
+      setPasswordError(`New password must be at least ${MIN_PASSWORD_LENGTH} characters.`)
+      return
+    }
+    if (newPassword === currentPassword) {
+      setPasswordError('The new password must be different from your current password.')
+      return
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordError('New passwords do not match.')
+      return
+    }
+
+    setIsChanging(true)
+    try {
+      await authService.changePassword(currentPassword, newPassword)
+      setCurrentPassword('')
+      setNewPassword('')
+      setConfirmPassword('')
+      setPasswordSuccess('Your password has been updated.')
+      addToast('Password updated successfully.', 'success')
+    } catch (err) {
+      setPasswordError(describeError(err).message)
+    } finally {
+      setIsChanging(false)
+    }
+  }
 
   return (
     <section className="page settings-page">
@@ -63,24 +103,79 @@ const SettingsPage = ({ user, onSignOut }) => {
         </div>
       </div>
 
-      <div className="panel">
-        <div className="panel-header">
-          <h3>
-            <HardDrive size={16} /> Integration status (expected)
-          </h3>
-        </div>
-        <div className="status-list">
-          {integrationRows.map((row) => (
-            <div key={row} className="status-row">
-              <span>{row}</span>
-              <span className="status-badge status-pending">Pending</span>
+      {isAuthConfigured && (
+        <div className="panel">
+          <div className="panel-header">
+            <h3>
+              <Key size={16} /> Change password
+            </h3>
+          </div>
+          <p className="settings-line">
+            Update the password for the signed-in Cognito account.
+          </p>
+
+          {passwordError && (
+            <div className="error-message" role="alert">
+              {passwordError}
             </div>
-          ))}
+          )}
+          {passwordSuccess && (
+            <div className="success-message" role="status">
+              {passwordSuccess}
+            </div>
+          )}
+
+          <form className="login-form" onSubmit={handleChangePassword} noValidate>
+            <PasswordField
+              inputId="settings-current-password"
+              label="Current password"
+              value={currentPassword}
+              onChange={setCurrentPassword}
+              autoComplete="current-password"
+              placeholder="Enter your current password"
+              disabled={isChanging}
+            />
+
+            <PasswordField
+              inputId="settings-new-password"
+              label="New password"
+              value={newPassword}
+              onChange={setNewPassword}
+              autoComplete="new-password"
+              placeholder="Enter a new password"
+              hint={`At least ${MIN_PASSWORD_LENGTH} characters. Your user pool may require more.`}
+              disabled={isChanging}
+            />
+
+            <PasswordField
+              inputId="settings-confirm-password"
+              label="Confirm new password"
+              value={confirmPassword}
+              onChange={setConfirmPassword}
+              autoComplete="new-password"
+              placeholder="Re-enter the new password"
+              disabled={isChanging}
+            />
+
+            <button
+              type="submit"
+              className="btn btn-primary settings-submit"
+              disabled={isChanging}
+              aria-busy={isChanging}
+            >
+              {isChanging ? (
+                <>
+                  <Loader2 size={16} /> Updating...
+                </>
+              ) : (
+                <>
+                  <Key size={16} /> Update password
+                </>
+              )}
+            </button>
+          </form>
         </div>
-        <p className="help-text">
-          Actual status is shown on the Admin page when returned by the backend.
-        </p>
-      </div>
+      )}
 
       <div className="panel danger-panel">
         <div className="panel-header">
